@@ -100,3 +100,29 @@ export interface CertificateExpiry {
   daysRemaining: number;
   status: 'valid' | 'expiring' | 'expired';
 }
+
+export interface Profile {
+  id: number;
+  name: string;
+  phNumber: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: any;
+  locale: any;
+}
+
+export interface Role {
+  name: string;
+  id: string;
+}
+
+export interface User {
+  id: string;
+  documentId:string;
+  email: string;
+  username: string;
+  confirmed: boolean;
+  blocked: boolean;
+  profile?: Profile;
+  role?: Role;
+}
