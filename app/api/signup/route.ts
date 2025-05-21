@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs'; // Make sure to install with: npm install bcryptjs
+import bcrypt from 'bcryptjs';
+import { sendVerificationEmail } from '@/utils/email';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -18,10 +20,23 @@ export async function POST(req: Request) {
   
 // Hash the password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Generate a secure token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        verificationToken,
+        emailVerified: null,
+      },
     });
-    return NextResponse.json({ message: 'User created', user: { id: user.id, email: user.email, name: user.name } });
+    // Send verification email
+    await sendVerificationEmail({
+      to: email,
+      token: verificationToken,
+    });
+    return NextResponse.json({ message: 'User created. Please verify your email.' });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }

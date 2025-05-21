@@ -33,11 +33,26 @@ const LoginPage = () => {
     formState: { isSubmitting },
   } = form;
 
+  const [apiError, setApiError] = React.useState<string | null>(null);
   const onSubmit = async (data: LoginFormInputs) => {
-    // Example: Replace with real authentication logic
-    storeUserInfo({ id: 1, email: data.email, name: 'Demo User' });
-    storeToken('mock-token');
-    alert('Logged in!');
+    setApiError(null);
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        setApiError(result.error || 'Login failed.');
+        return;
+      }
+      storeUserInfo(result.user);
+      storeToken('dummy-token'); // Replace with real token if implemented
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      setApiError(err.message || 'Login failed.');
+    }
   };
 
   return (
@@ -47,6 +62,9 @@ const LoginPage = () => {
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white p-8 rounded shadow-md w-full max-w-sm"
         >
+          {apiError && (
+            <div className="text-red-500 text-sm mb-4 text-center">{apiError}</div>
+          )}
           <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
           <FormField
             control={form.control}
@@ -56,6 +74,7 @@ const LoginPage = () => {
                 <FormControl>
                   <Input
                     {...field}
+                    value={field.value ?? ''}
                     error={!!form.formState.errors.email}
                     placeholder="Email"
                     preicon={<Mail className="w-5 h-5 text-muted-foreground" />}
@@ -73,6 +92,7 @@ const LoginPage = () => {
                 <FormControl>
                   <Input
                     {...field}
+                    value={field.value ?? ''}
                     type="password"
                     error={!!form.formState.errors.password}
                     placeholder="Password"

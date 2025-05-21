@@ -9,10 +9,12 @@ generator client {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  name     String
-  password String
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  name              String
+  password          String
+  emailVerified     DateTime?
+  verificationToken String?
 }
 
 datasource db {
