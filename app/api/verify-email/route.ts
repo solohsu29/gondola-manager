@@ -20,6 +20,5 @@ export async function GET(req: Request) {
       verificationToken: null,
     },
   });
-  // Optionally: auto-login or return a redirect
-  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`);
+  return NextResponse.json({ success: true });
 }
