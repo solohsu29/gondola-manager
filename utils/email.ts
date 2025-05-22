@@ -7,6 +7,11 @@ export async function sendVerificationEmail({
   to: string;
   token: string;
 }): Promise<void> {
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    throw new Error("SMTP credentials are missing in environment variables");
+  }
+  
   // Configure your SMTP transport (update with your credentials)
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
