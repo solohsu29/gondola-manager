@@ -7,6 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Calendar, FileCheck, FileText, Truck } from 'lucide-react'
 import React from 'react'
 
+export const metadata = {
+  title: 'Gondola Manager | Dashboard',
+};
+
 const Dashboard = () => {
   return (
     <div className="max-w-7xl mx-auto">
