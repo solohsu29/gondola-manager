@@ -126,18 +126,18 @@ export class PrismaClient<
    * Allows the running of a sequence of read/write operations that are guaranteed to either succeed or fail as a whole.
    * @example
    * ```
-   * const [george, bob, alice] = await prisma.$transaction([
+   * const [george, bob, alice] = await prisma.$project([
    *   prisma.user.create({ data: { name: 'George' } }),
    *   prisma.user.create({ data: { name: 'Bob' } }),
    *   prisma.user.create({ data: { name: 'Alice' } }),
    * ])
    * ```
    * 
-   * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
+   * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/projects).
    */
-  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
+  $project<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.ProjectIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
 
-  $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<R>
+  $project<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.ProjectIsolationLevel }): $Utils.JsPromise<R>
 
 
   $extends: $Extensions.ExtendsHook<"extends", Prisma.TypeMapCb<ClientOptions>, ExtArgs, $Utils.Call<Prisma.TypeMapCb<ClientOptions>, {
@@ -613,7 +613,7 @@ export namespace Prisma {
     }
     meta: {
       modelProps: "user"
-      txIsolationLevel: Prisma.TransactionIsolationLevel
+      txIsolationLevel: Prisma.ProjectIsolationLevel
     }
     model: {
       User: {
@@ -748,14 +748,14 @@ export namespace Prisma {
      */
     log?: (LogLevel | LogDefinition)[]
     /**
-     * The default values for transactionOptions
+     * The default values for projectOptions
      * maxWait ?= 2000
      * timeout ?= 5000
      */
-    transactionOptions?: {
+    projectOptions?: {
       maxWait?: number
       timeout?: number
-      isolationLevel?: Prisma.TransactionIsolationLevel
+      isolationLevel?: Prisma.ProjectIsolationLevel
     }
     /**
      * Global configuration for omitting model fields by default.
@@ -836,7 +836,7 @@ export namespace Prisma {
     action: PrismaAction
     args: any
     dataPath: string[]
-    runInTransaction: boolean
+    runInProject: boolean
   }
 
   /**
@@ -851,9 +851,9 @@ export namespace Prisma {
   export function getLogLevel(log: Array<LogLevel | LogDefinition>): LogLevel | undefined;
 
   /**
-   * `PrismaClient` proxy available in interactive transactions.
+   * `PrismaClient` proxy available in interactive projects.
    */
-  export type TransactionClient = Omit<Prisma.DefaultPrismaClient, runtime.ITXClientDenyList>
+  export type ProjectClient = Omit<Prisma.DefaultPrismaClient, runtime.ITXClientDenyList>
 
   export type Datasource = {
     url?: string
@@ -1876,14 +1876,14 @@ export namespace Prisma {
    * Enums
    */
 
-  export const TransactionIsolationLevel: {
+  export const ProjectIsolationLevel: {
     ReadUncommitted: 'ReadUncommitted',
     ReadCommitted: 'ReadCommitted',
     RepeatableRead: 'RepeatableRead',
     Serializable: 'Serializable'
   };
 
-  export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+  export type ProjectIsolationLevel = (typeof ProjectIsolationLevel)[keyof typeof ProjectIsolationLevel]
 
 
   export const UserScalarFieldEnum: {

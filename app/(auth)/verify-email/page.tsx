@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
       }
       const data = await res.json();
       if (res.ok) {
-        router.push('/dashboard');
+        router.push('/login');
       } else {
         alert(data.error || 'Verification failed.');
       }

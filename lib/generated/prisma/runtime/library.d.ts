@@ -97,7 +97,7 @@ export declare type BaseDMMF = {
 
 declare type BatchArgs = {
     queries: BatchQuery[];
-    transaction?: {
+    project?: {
         isolationLevel?: IsolationLevel;
     };
 };
@@ -125,7 +125,7 @@ declare type BatchQueryOptionsCbArgs = {
 
 declare type BatchResponse = MultiBatchResponse | CompactedBatchResponse;
 
-declare type BatchTransactionOptions = {
+declare type BatchProjectOptions = {
     isolationLevel?: IsolationLevel;
 };
 
@@ -708,7 +708,7 @@ export declare function defineDmmfProperty(target: object, runtimeDataModel: Run
 
 declare function defineExtension(ext: ExtensionArgs | ((client: Client) => Client)): (client: Client) => Client;
 
-declare const denylist: readonly ["$connect", "$disconnect", "$on", "$transaction", "$use", "$extends"];
+declare const denylist: readonly ["$connect", "$disconnect", "$on", "$project", "$use", "$extends"];
 
 declare type Deprecation = ReadonlyDeep_2<{
     sinceVersion: string;
@@ -872,10 +872,10 @@ export declare type DynamicClientExtensionThisBuiltin<TypeMap extends TypeMapDef
     $extends: ExtendsHook<'extends', TypeMapCb, ExtArgs, Call<TypeMapCb, {
         extArgs: ExtArgs;
     }>>;
-    $transaction<P extends PrismaPromise<any>[]>(arg: [...P], options?: {
+    $project<P extends PrismaPromise<any>[]>(arg: [...P], options?: {
         isolationLevel?: TypeMap['meta']['txIsolationLevel'];
     }): Promise<UnwrapTuple<P>>;
-    $transaction<R>(fn: (client: Omit<DynamicClientExtensionThis<TypeMap, TypeMapCb, ExtArgs>, ITXClientDenyList>) => Promise<R>, options?: {
+    $project<R>(fn: (client: Omit<DynamicClientExtensionThis<TypeMap, TypeMapCb, ExtArgs>, ITXClientDenyList>) => Promise<R>, options?: {
         maxWait?: number;
         timeout?: number;
         isolationLevel?: TypeMap['meta']['txIsolationLevel'];
@@ -990,18 +990,18 @@ export declare const empty: Sql;
 
 export declare type EmptyToUnknown<T> = T;
 
-declare interface Engine<InteractiveTransactionPayload = unknown> {
+declare interface Engine<InteractiveProjectPayload = unknown> {
     /** The name of the engine. This is meant to be consumed externally */
     readonly name: string;
     onBeforeExit(callback: () => Promise<void>): void;
     start(): Promise<void>;
     stop(): Promise<void>;
     version(forceRun?: boolean): Promise<string> | string;
-    request<T>(query: JsonQuery, options: RequestOptions<InteractiveTransactionPayload>): Promise<QueryEngineResultData<T>>;
-    requestBatch<T>(queries: JsonQuery[], options: RequestBatchOptions<InteractiveTransactionPayload>): Promise<BatchQueryEngineResult<T>[]>;
-    transaction(action: 'start', headers: Transaction_2.TransactionHeaders, options: Transaction_2.Options): Promise<Transaction_2.InteractiveTransactionInfo<unknown>>;
-    transaction(action: 'commit', headers: Transaction_2.TransactionHeaders, info: Transaction_2.InteractiveTransactionInfo<unknown>): Promise<void>;
-    transaction(action: 'rollback', headers: Transaction_2.TransactionHeaders, info: Transaction_2.InteractiveTransactionInfo<unknown>): Promise<void>;
+    request<T>(query: JsonQuery, options: RequestOptions<InteractiveProjectPayload>): Promise<QueryEngineResultData<T>>;
+    requestBatch<T>(queries: JsonQuery[], options: RequestBatchOptions<InteractiveProjectPayload>): Promise<BatchQueryEngineResult<T>[]>;
+    project(action: 'start', headers: Project_2.ProjectHeaders, options: Project_2.Options): Promise<Project_2.InteractiveProjectInfo<unknown>>;
+    project(action: 'commit', headers: Project_2.ProjectHeaders, info: Project_2.InteractiveProjectInfo<unknown>): Promise<void>;
+    project(action: 'rollback', headers: Project_2.ProjectHeaders, info: Project_2.InteractiveProjectInfo<unknown>): Promise<void>;
     metrics(options: MetricsOptionsJson): Promise<Metrics>;
     metrics(options: MetricsOptionsPrometheus): Promise<string>;
     applyPendingMigrations(): Promise<void>;
@@ -1029,7 +1029,7 @@ declare interface EngineConfig {
     engineEndpoint?: string;
     activeProvider?: string;
     logEmitter: LogEmitter;
-    transactionOptions: Transaction_2.Options;
+    projectOptions: Project_2.Options;
     /**
      * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`.
      * If set, this is only used in the library engine, and all queries would be performed through it,
@@ -1179,7 +1179,7 @@ declare type Error_2 = {
     kind: 'AuthenticationFailed';
     user?: string;
 } | {
-    kind: 'TransactionWriteConflict';
+    kind: 'ProjectWriteConflict';
 } | {
     kind: 'TableDoesNotExist';
     table?: string;
@@ -1475,7 +1475,7 @@ export declare type GetAggregateResult<P extends OperationPayload, A> = {
     };
 };
 
-declare function getBatchRequestPayload(batch: JsonQuery[], transaction?: TransactionOptions_3<unknown>): QueryEngineBatchRequest;
+declare function getBatchRequestPayload(batch: JsonQuery[], project?: ProjectOptions_3<unknown>): QueryEngineBatchRequest;
 
 export declare type GetBatchResult = {
     count: number;
@@ -1568,7 +1568,7 @@ export declare function getPrismaClient(config: GetPrismaClientConfig): {
         /**
          * Executes a raw query and always returns a number
          */
-        $executeRawInternal(transaction: PrismaPromiseTransaction | undefined, clientMethod: string, args: RawQueryArgs, middlewareArgsMapper?: MiddlewareArgsMapper<unknown, unknown>): Promise<number>;
+        $executeRawInternal(project: PrismaPromiseProject | undefined, clientMethod: string, args: RawQueryArgs, middlewareArgsMapper?: MiddlewareArgsMapper<unknown, unknown>): Promise<number>;
         /**
          * Executes a raw query provided through a safe tag function
          * @see https://github.com/prisma/prisma/issues/7142
@@ -1597,7 +1597,7 @@ export declare function getPrismaClient(config: GetPrismaClientConfig): {
         /**
          * Executes a raw query and returns selected data
          */
-        $queryRawInternal(transaction: PrismaPromiseTransaction | undefined, clientMethod: string, args: RawQueryArgs, middlewareArgsMapper?: MiddlewareArgsMapper<unknown, unknown>): Promise<any>;
+        $queryRawInternal(project: PrismaPromiseProject | undefined, clientMethod: string, args: RawQueryArgs, middlewareArgsMapper?: MiddlewareArgsMapper<unknown, unknown>): Promise<any>;
         /**
          * Executes a raw query provided through a safe tag function
          * @see https://github.com/prisma/prisma/issues/7142
@@ -1622,39 +1622,39 @@ export declare function getPrismaClient(config: GetPrismaClientConfig): {
          */
         $queryRawUnsafe(query: string, ...values: RawValue[]): PrismaPromise_2<unknown, any>;
         /**
-         * Execute a batch of requests in a transaction
+         * Execute a batch of requests in a project
          * @param requests
          * @param options
          */
-        _transactionWithArray({ promises, options, }: {
+        _projectWithArray({ promises, options, }: {
             promises: Array<PrismaPromise_2<any>>;
-            options?: BatchTransactionOptions;
+            options?: BatchProjectOptions;
         }): Promise<any>;
         /**
-         * Perform a long-running transaction
+         * Perform a long-running project
          * @param callback
          * @param options
          * @returns
          */
-        _transactionWithCallback({ callback, options, }: {
+        _projectWithCallback({ callback, options, }: {
             callback: (client: Client) => Promise<unknown>;
-            options?: TransactionOptions_2;
+            options?: ProjectOptions_2;
         }): Promise<unknown>;
-        _createItxClient(transaction: PrismaPromiseInteractiveTransaction): Client;
+        _createItxClient(project: PrismaPromiseInteractiveProject): Client;
         /**
-         * Execute queries within a transaction
+         * Execute queries within a project
          * @param input a callback or a query list
          * @param options to set timeouts (callback)
          * @returns
          */
-        $transaction(input: any, options?: any): Promise<any>;
+        $project(input: any, options?: any): Promise<any>;
         /**
          * Runs the middlewares over params before executing a request
          * @param internalParams
          * @returns
          */
         _request(internalParams: InternalRequestParams): Promise<any>;
-        _executeRequest({ args, clientMethod, dataPath, callsite, action, model, argsMapper, transaction, unpacker, otelParentCtx, customDataProxyFetch, }: InternalRequestParams): Promise<any>;
+        _executeRequest({ args, clientMethod, dataPath, callsite, action, model, argsMapper, project, unpacker, otelParentCtx, customDataProxyFetch, }: InternalRequestParams): Promise<any>;
         $metrics: MetricsClient;
         /**
          * Shortcut for checking a preview flag
@@ -1797,7 +1797,7 @@ declare type HandleErrorParams = {
     error: any;
     clientMethod: string;
     callsite?: CallSite;
-    transaction?: PrismaPromiseTransaction;
+    project?: PrismaPromiseProject;
     modelName?: string;
     globalOmit?: GlobalOmitOptions;
 };
@@ -1886,20 +1886,20 @@ declare type InputType = ReadonlyDeep_2<{
 
 declare type InputTypeRef = TypeRef<'scalar' | 'inputObjectTypes' | 'enumTypes' | 'fieldRefTypes'>;
 
-declare type InteractiveTransactionInfo<Payload = unknown> = {
+declare type InteractiveProjectInfo<Payload = unknown> = {
     /**
-     * Transaction ID returned by the query engine.
+     * Project ID returned by the query engine.
      */
     id: string;
     /**
      * Arbitrary payload the meaning of which depends on the `Engine` implementation.
-     * For example, `DataProxyEngine` needs to associate different API endpoints with transactions.
+     * For example, `DataProxyEngine` needs to associate different API endpoints with projects.
      * In `LibraryEngine` and `BinaryEngine` it is currently not used.
      */
     payload: Payload;
 };
 
-declare type InteractiveTransactionOptions<Payload> = Transaction_2.InteractiveTransactionInfo<Payload>;
+declare type InteractiveProjectOptions<Payload> = Project_2.InteractiveProjectInfo<Payload>;
 
 export declare type InternalArgs<R = {
     [K in string]: {
@@ -1950,7 +1950,7 @@ declare type InternalRequestParams = {
      */
     jsModelName?: string;
     callsite?: CallSite;
-    transaction?: PrismaPromiseTransaction;
+    project?: PrismaPromiseProject;
     unpacker?: Unpacker;
     otelParentCtx?: Context;
     /** Used to "desugar" a user input into an "expanded" one */
@@ -1959,7 +1959,7 @@ declare type InternalRequestParams = {
     middlewareArgsMapper?: MiddlewareArgsMapper<unknown, unknown>;
     /** Used for Accelerate client extension via Data Proxy */
     customDataProxyFetch?: CustomDataProxyFetch;
-} & Omit<QueryMiddlewareParams, 'runInTransaction'>;
+} & Omit<QueryMiddlewareParams, 'runInProject'>;
 
 declare type IsolationLevel = 'READ UNCOMMITTED' | 'READ COMMITTED' | 'REPEATABLE READ' | 'SNAPSHOT' | 'SERIALIZABLE';
 
@@ -2006,7 +2006,7 @@ export declare interface JsonArray extends Array<JsonValue> {
 
 export declare type JsonBatchQuery = {
     batch: JsonQuery[];
-    transaction?: {
+    project?: {
         isolationLevel?: IsolationLevel;
     };
 };
@@ -2515,11 +2515,11 @@ export declare type PrismaClientOptions = {
      */
     errorFormat?: ErrorFormat;
     /**
-     * The default values for Transaction options
+     * The default values for Project options
      * maxWait ?= 2000
      * timeout ?= 5000
      */
-    transactionOptions?: Transaction_2.Options;
+    projectOptions?: Project_2.Options;
     /**
      * @example
      * \`\`\`
@@ -2597,29 +2597,29 @@ declare interface PrismaPromise_2<TResult, TSpec extends PrismaOperationSpec<unk
      * Extension of the original `.then` function
      * @param onfulfilled same as regular promises
      * @param onrejected same as regular promises
-     * @param transaction transaction options
+     * @param project project options
      */
-    then<R1 = TResult, R2 = never>(onfulfilled?: (value: TResult) => R1 | PromiseLike<R1>, onrejected?: (error: unknown) => R2 | PromiseLike<R2>, transaction?: PrismaPromiseTransaction): Promise<R1 | R2>;
+    then<R1 = TResult, R2 = never>(onfulfilled?: (value: TResult) => R1 | PromiseLike<R1>, onrejected?: (error: unknown) => R2 | PromiseLike<R2>, project?: PrismaPromiseProject): Promise<R1 | R2>;
     /**
      * Extension of the original `.catch` function
      * @param onrejected same as regular promises
-     * @param transaction transaction options
+     * @param project project options
      */
-    catch<R = never>(onrejected?: ((reason: any) => R | PromiseLike<R>) | undefined | null, transaction?: PrismaPromiseTransaction): Promise<TResult | R>;
+    catch<R = never>(onrejected?: ((reason: any) => R | PromiseLike<R>) | undefined | null, project?: PrismaPromiseProject): Promise<TResult | R>;
     /**
      * Extension of the original `.finally` function
      * @param onfinally same as regular promises
-     * @param transaction transaction options
+     * @param project project options
      */
-    finally(onfinally?: (() => void) | undefined | null, transaction?: PrismaPromiseTransaction): Promise<TResult>;
+    finally(onfinally?: (() => void) | undefined | null, project?: PrismaPromiseProject): Promise<TResult>;
     /**
      * Called when executing a batch of regular tx
-     * @param transaction transaction options for batch tx
+     * @param project project options for batch tx
      */
-    requestTransaction?(transaction: PrismaPromiseBatchTransaction): PromiseLike<unknown>;
+    requestProject?(project: PrismaPromiseBatchProject): PromiseLike<unknown>;
 }
 
-declare type PrismaPromiseBatchTransaction = {
+declare type PrismaPromiseBatchProject = {
     kind: 'batch';
     id: number;
     isolationLevel?: IsolationLevel;
@@ -2627,11 +2627,11 @@ declare type PrismaPromiseBatchTransaction = {
     lock: PromiseLike<void>;
 };
 
-declare type PrismaPromiseCallback = (transaction?: PrismaPromiseTransaction) => Promise<unknown>;
+declare type PrismaPromiseCallback = (project?: PrismaPromiseProject) => Promise<unknown>;
 
 /**
  * Creates a [[PrismaPromise]]. It is Prisma's implementation of `Promise` which
- * is essentially a proxy for `Promise`. All the transaction-compatible client
+ * is essentially a proxy for `Promise`. All the project-compatible client
  * methods return one, this allows for pre-preparing queries without executing
  * them until `.then` is called. It's the foundation of Prisma's query batching.
  * @param callback that will be wrapped within our promise implementation
@@ -2640,13 +2640,13 @@ declare type PrismaPromiseCallback = (transaction?: PrismaPromiseTransaction) =>
  */
 declare type PrismaPromiseFactory = <T extends PrismaOperationSpec<unknown>>(callback: PrismaPromiseCallback, op?: T) => PrismaPromise_2<unknown>;
 
-declare type PrismaPromiseInteractiveTransaction<PayloadType = unknown> = {
+declare type PrismaPromiseInteractiveProject<PayloadType = unknown> = {
     kind: 'itx';
     id: string;
     payload: PayloadType;
 };
 
-declare type PrismaPromiseTransaction<PayloadType = unknown> = PrismaPromiseBatchTransaction | PrismaPromiseInteractiveTransaction<PayloadType>;
+declare type PrismaPromiseProject<PayloadType = unknown> = PrismaPromiseBatchProject | PrismaPromiseInteractiveProject<PayloadType>;
 
 export declare const PrivateResultType: unique symbol;
 
@@ -2704,7 +2704,7 @@ declare type QueryCompilerOptions = {
 
 declare type QueryEngineBatchGraphQLRequest = {
     batch: QueryEngineRequest[];
-    transaction?: boolean;
+    project?: boolean;
     isolationLevel?: IsolationLevel;
 };
 
@@ -2733,11 +2733,11 @@ declare type QueryEngineInstance = {
      * @param requestStr JSON.stringified `QueryEngineRequest | QueryEngineBatchRequest`
      * @param headersStr JSON.stringified `QueryEngineRequestHeaders`
      */
-    query(requestStr: string, headersStr: string, transactionId: string | undefined, requestId: string): Promise<string>;
+    query(requestStr: string, headersStr: string, projectId: string | undefined, requestId: string): Promise<string>;
     sdlSchema?(): Promise<string>;
-    startTransaction(options: string, traceHeaders: string, requestId: string): Promise<string>;
-    commitTransaction(id: string, traceHeaders: string, requestId: string): Promise<string>;
-    rollbackTransaction(id: string, traceHeaders: string, requestId: string): Promise<string>;
+    startProject(options: string, traceHeaders: string, requestId: string): Promise<string>;
+    commitProject(id: string, traceHeaders: string, requestId: string): Promise<string>;
+    rollbackProject(id: string, traceHeaders: string, requestId: string): Promise<string>;
     metrics?(options: string): Promise<string>;
     applyPendingMigrations?(): Promise<void>;
     trace(requestId: string): Promise<string | null>;
@@ -2778,7 +2778,7 @@ declare type QueryMiddlewareParams = {
     /** TODO what is this */
     dataPath: string[];
     /** TODO what is this */
-    runInTransaction: boolean;
+    runInProject: boolean;
     args?: UserArgs_2;
 };
 
@@ -2850,8 +2850,8 @@ export declare type RenameAndNestPayloadKeys<P> = {
     [K in keyof P as K extends 'scalars' | 'objects' | 'composites' ? keyof P[K] : never]: P[K];
 };
 
-declare type RequestBatchOptions<InteractiveTransactionPayload> = {
-    transaction?: TransactionOptions_3<InteractiveTransactionPayload>;
+declare type RequestBatchOptions<InteractiveProjectPayload> = {
+    project?: ProjectOptions_3<InteractiveProjectPayload>;
     traceparent?: string;
     numTry?: number;
     containsWrite: boolean;
@@ -2881,16 +2881,16 @@ declare class RequestHandler {
      * handlers to finish.
      */
     handleAndLogRequestError(params: HandleErrorParams): never;
-    handleRequestError({ error, clientMethod, callsite, transaction, args, modelName, globalOmit, }: HandleErrorParams): never;
+    handleRequestError({ error, clientMethod, callsite, project, args, modelName, globalOmit, }: HandleErrorParams): never;
     sanitizeMessage(message: any): any;
     unpack(data: unknown, dataPath: string[], unpacker?: Unpacker): any;
     get [Symbol.toStringTag](): string;
 }
 
-declare type RequestOptions<InteractiveTransactionPayload> = {
+declare type RequestOptions<InteractiveProjectPayload> = {
     traceparent?: string;
     numTry?: number;
-    interactiveTransaction?: InteractiveTransactionOptions<InteractiveTransactionPayload>;
+    interactiveProject?: InteractiveProjectOptions<InteractiveProjectPayload>;
     isWrite: boolean;
     customDataProxyFetch?: CustomDataProxyFetch;
 };
@@ -2902,7 +2902,7 @@ declare type RequestParams = {
     dataPath: string[];
     clientMethod: string;
     callsite?: CallSite;
-    transaction?: PrismaPromiseTransaction;
+    project?: PrismaPromiseProject;
     extensions: MergedExtensionsList;
     args?: any;
     headers?: Record<string, string>;
@@ -3370,9 +3370,9 @@ declare interface SqlDriverAdapter extends SqlQueryable {
      */
     executeScript(script: string): Promise<void>;
     /**
-     * Start new transaction.
+     * Start new project.
      */
-    startTransaction(isolationLevel?: IsolationLevel): Promise<Transaction>;
+    startProject(isolationLevel?: IsolationLevel): Promise<Project>;
     /**
      * Optional method that returns extra connection info
      */
@@ -3478,49 +3478,49 @@ declare interface TracingHelper {
     runInChildSpan<R>(nameOrOptions: string | ExtendedSpanOptions, callback: SpanCallback<R>): R;
 }
 
-declare interface Transaction extends AdapterInfo, SqlQueryable {
+declare interface Project extends AdapterInfo, SqlQueryable {
     /**
-     * Transaction options.
+     * Project options.
      */
-    readonly options: TransactionOptions;
+    readonly options: ProjectOptions;
     /**
-     * Commit the transaction.
+     * Commit the project.
      */
     commit(): Promise<void>;
     /**
-     * Roll back the transaction.
+     * Roll back the project.
      */
     rollback(): Promise<void>;
 }
 
-declare namespace Transaction_2 {
+declare namespace Project_2 {
     export {
-        TransactionOptions_2 as Options,
-        InteractiveTransactionInfo,
-        TransactionHeaders
+        ProjectOptions_2 as Options,
+        InteractiveProjectInfo,
+        ProjectHeaders
     }
 }
 
-declare type TransactionHeaders = {
+declare type ProjectHeaders = {
     traceparent?: string;
 };
 
-declare type TransactionOptions = {
+declare type ProjectOptions = {
     usePhantomQuery: boolean;
 };
 
-declare type TransactionOptions_2 = {
+declare type ProjectOptions_2 = {
     maxWait?: number;
     timeout?: number;
     isolationLevel?: IsolationLevel;
 };
 
-declare type TransactionOptions_3<InteractiveTransactionPayload> = {
+declare type ProjectOptions_3<InteractiveProjectPayload> = {
     kind: 'itx';
-    options: InteractiveTransactionOptions<InteractiveTransactionPayload>;
+    options: InteractiveProjectOptions<InteractiveProjectPayload>;
 } | {
     kind: 'batch';
-    options: BatchTransactionOptions;
+    options: BatchProjectOptions;
 };
 
 export declare class TypedSql<Values extends readonly unknown[], Result> {

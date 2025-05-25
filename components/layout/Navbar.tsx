@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import Link from "next/link";
+import { useUserInfo } from "@/components/hooks/useUserInfo";
 import { Bell, Search, Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +26,14 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const [unreadCount] = useState(
     mockNotifications.filter((notif) => !notif.read).length
   );
+  const { user, removeAllData } = useUserInfo();
 
+  const handleLogout = () => {
+    removeAllData();
+    window.location.href = "/login";
+  };
+
+  console.log('user',user)
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
       <div className="px-4 h-16 flex items-center justify-between">
@@ -37,20 +46,21 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-4 space-x-2">
           <div className="hidden md:block relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search..."
-              className="pl-8"
-            />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-4 text-gray-400" />
+          <Input
+            placeholder="Search ..."
+            className="pl-9"
+           
+          />
           </div>
 
-          <div className="flex items-center">
+          <div className="flex  gap-2 items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
+                  <Bell className="h-6 w-6" />
                   {unreadCount > 0 && (
                     <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-status-warning text-white">
                       {unreadCount}
@@ -85,38 +95,41 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Help</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="ml-2 relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg" alt="User" />
-                    <AvatarFallback>GM</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Preferences</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {user && user.email ? (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="ml-2 relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="/placeholder.svg" alt="User" />
+                        <AvatarFallback>{user.email[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/preferences">Preferences</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="outline" className="ml-2">Login</Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="ml-2">Sign Up</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

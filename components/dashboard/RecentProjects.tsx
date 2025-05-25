@@ -12,11 +12,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Transaction } from "../data-types";
+import { Project } from "../data-types";
 import Link from "next/link";
 
 interface RecentProjectsProps {
-  projects: Transaction[];
+  projects: Project[];
 }
 
 const RecentProjects = ({ projects }: RecentProjectsProps) => {
@@ -44,23 +44,31 @@ const RecentProjects = ({ projects }: RecentProjectsProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects.map((transaction) => (
-              <TableRow key={transaction.id}>
+            {projects.map((project) => (
+              <TableRow key={project.id}>
                 <TableCell className="font-medium">
-                  <Link href={`/projects/${transaction.id}`} className="text-gondola-600 hover:text-gondola-800 underline">
-                    {transaction.doNumber}
+                  <Link href={`/projects/${project.id}`} className="text-gondola-600 hover:text-gondola-800 underline">
+                    {project.deliveryOrders && project.deliveryOrders.length > 0
+  ? project.deliveryOrders.map((doObj) => doObj.number).join(', ')
+  : 'No DO' }
                   </Link>
                 </TableCell>
-                <TableCell>{transaction.clientName}</TableCell>
-                <TableCell>{transaction.siteName}</TableCell>
-                <TableCell className="text-center">{transaction.gondolas.length}</TableCell>
-                <TableCell>{formatDistanceToNow(transaction.createdAt, { addSuffix: true })}</TableCell>
+                <TableCell>{project.clientName}</TableCell>
+                <TableCell>{project.siteName}</TableCell>
+                <TableCell className="text-center">{project.gondolas.length}</TableCell>
+                <TableCell>{formatDistanceToNow(project.createdAt, { addSuffix: true })}</TableCell>
                 <TableCell className="text-right">
                   <Badge variant={
-                    transaction.status === 'active' ? 'outline' :
-                    transaction.status === 'completed' ? 'default' : 'destructive'
+                    project.status === 'active' ? 'outline' :
+                    project.status === 'completed' ? 'default' :
+                    project.status === 'cancelled' ? 'destructive' : 'secondary'
+                  } className={
+                    project.status === 'active' ? 'text-green-600 border-green-600' :
+                    project.status === 'completed' ? 'text-white' :
+                    project.status === 'cancelled' ? 'text-red-600 border-red-600' :
+                    'text-gray-400'
                   }>
-                    {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                    {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
                   </Badge>
                 </TableCell>
               </TableRow>

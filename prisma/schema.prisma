@@ -9,13 +9,133 @@ generator client {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  email             String   @unique
-  name              String
-  password          String
-  emailVerified     DateTime?
-  verificationToken String?
+  id          String   @id @default(uuid())
+  documentId  String?
+  email       String   @unique
+  username    String?
+  confirmed   Boolean @default(false)
+  blocked     Boolean @default(false)
+  profileId   Int?
+  roleId      String?
+
+  profile     Profile? @relation(fields: [profileId], references: [id])
+  role        Role?    @relation(fields: [roleId], references: [id])
+  verificationTokens VerificationToken[]
 }
+
+model Profile {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phNumber    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+  locale      String?
+
+  users       User[]
+}
+
+model Role {
+  id    String  @id @default(uuid())
+  name  String
+  users User[]
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  type        String
+  name        String
+  uploadedAt  DateTime
+  expiryDate  DateTime?
+  fileUrl     String
+  status      String
+  gondolaId   String?
+  projectId   String?
+
+  gondola     Gondola? @relation(fields: [gondolaId], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
+}
+
+model Gondola {
+  id             String   @id @default(uuid())
+  serialNumber   String
+  status         String
+  bay            String
+  floor          String
+  block          String
+  elevation      String
+  deployedAt     DateTime?
+  lastInspection DateTime?
+  nextInspection DateTime?
+  projectId      String?
+
+  documents      Document[]
+  photos         Photo[]
+  project        Project?  @relation(fields: [projectId], references: [id])
+}
+
+model Photo {
+  id          String   @id @default(uuid())
+  url         String
+  uploadedAt  DateTime
+  description String
+  gondolaId   String
+
+  gondola     Gondola  @relation(fields: [gondolaId], references: [id], onDelete: Cascade)
+}
+
+model DeliveryOrder {
+  id        String   @id @default(uuid())
+  number    String
+  date      DateTime
+  fileUrl   String?
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+}
+
+model Project {
+  id            String   @id @default(uuid())
+  clientName    String
+  siteName      String
+  createdAt     DateTime @default(now())
+  startDate     DateTime
+  endDate       DateTime?
+  status        String
+  gondolas      Gondola[]
+  deliveryOrders DeliveryOrder[]
+  documents     Document[]
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  type       String
+  message    String
+  date       DateTime
+  read       Boolean  @default(false)
+  actionLink String?
+}
+
+model CertificateExpiry {
+  id            String   @id @default(uuid())
+  documentId    String
+  gondolaId     String
+  serialNumber  String
+  documentType  String
+  expiryDate    DateTime
+  daysRemaining Int
+  status        String
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+
 
 datasource db {
   provider = "postgresql"

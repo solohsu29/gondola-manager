@@ -19,8 +19,10 @@ interface CertificateExpiryWidgetProps {
 }
 
 const CertificateExpiryWidget = ({ certificates }: CertificateExpiryWidgetProps) => {
-  // Sort by most critical first (expired, then expiring soon)
-  const sortedCertificates = [...certificates].sort((a, b) => {
+  // Only show certificates with status 'valid' or 'expired'
+  const filteredCertificates = certificates.filter(cert => cert.status === 'valid' || cert.status === 'expired');
+  // Sort: expired first, then valid by soonest expiry
+  const sortedCertificates = [...filteredCertificates].sort((a, b) => {
     if (a.status === 'expired' && b.status !== 'expired') return -1;
     if (a.status !== 'expired' && b.status === 'expired') return 1;
     return a.daysRemaining - b.daysRemaining;
@@ -34,7 +36,7 @@ const CertificateExpiryWidget = ({ certificates }: CertificateExpiryWidgetProps)
       default: return type;
     }
   };
-
+console.log('certificates',certificates)
   return (
     <Card>
       <CardHeader>
@@ -60,12 +62,13 @@ const CertificateExpiryWidget = ({ certificates }: CertificateExpiryWidgetProps)
                   </div>
                   <div className="flex items-center">
                     <Badge variant={
-                      cert.status === 'expired' ? 'destructive' :
-                      cert.status === 'expiring' ? 'outline' : 'default'
+                      cert.status === 'expired' ? 'destructive' : 'default'
                     }>
                       {cert.status === 'expired' ? 'Expired' : 
-                      `Expires ${formatDistanceToNow(cert.expiryDate, { addSuffix: true })}`}
+                      `Valid until ${formatDistanceToNow(cert.expiryDate, { addSuffix: true })}`}
                     </Badge>
+
+                    
                   </div>
                 </div>
               </li>

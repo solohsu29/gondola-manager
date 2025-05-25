@@ -22,7 +22,7 @@ type LoginFormInputs = {
 };
 
 const LoginPage = () => {
-  const { storeUserInfo, storeToken } = useUserInfo();
+  const { user } = useUserInfo(); // if you want to check loading or user state
   const form = useForm<LoginFormInputs>({
     resolver: yupResolver(schema),
   });
@@ -47,8 +47,6 @@ const LoginPage = () => {
         setApiError(result.error || 'Login failed.');
         return;
       }
-      storeUserInfo(result.user);
-      storeToken('dummy-token'); // Replace with real token if implemented
       window.location.href = '/dashboard';
     } catch (err: any) {
       setApiError(err.message || 'Login failed.');

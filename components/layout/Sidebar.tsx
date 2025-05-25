@@ -168,7 +168,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
             </div>
           )} */}
 
-          <NavItem
+          {/* <NavItem
             href="/documents"
             icon={FileText}
             active={activeItem === "documents"}
@@ -198,7 +198,7 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
             active={activeItem === "calendar"}
           >
             Calendar
-          </NavItem>
+          </NavItem> */}
         </nav>
 
         <div className="pt-4 border-t border-gray-200">

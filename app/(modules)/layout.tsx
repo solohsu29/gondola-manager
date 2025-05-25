@@ -1,7 +1,5 @@
 import PageLayout from "@/components/layout";
 
-
-
 export default function RootLayout({
   children,
 }: Readonly<{

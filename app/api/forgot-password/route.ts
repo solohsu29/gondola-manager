@@ -17,9 +17,13 @@ export async function POST(req: Request) {
     }
     // Generate a reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    await prisma.user.update({
-      where: { email },
-      data: { verificationToken: resetToken },
+    // Store the reset token in the VerificationToken table
+    await prisma.verificationToken.create({
+      data: {
+        token: resetToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour expiry
+      },
     });
     // Send reset password email
     await sendResetPasswordEmail({

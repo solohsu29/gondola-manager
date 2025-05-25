@@ -30,7 +30,7 @@ export interface Document {
   uploadedAt: Date;
   expiryDate?: Date;
   fileUrl: string;
-  status: 'valid' | 'expiring' | 'expired';
+  status: 'valid' | 'expired';
 }
 
 // Gondola equipment
@@ -38,12 +38,10 @@ export interface Gondola {
   id: string;
   serialNumber: string;
   status: GondolaStatus;
-  location: {
-    bay: string;
-    floor: string;
-    block: string;
-    elevation: string;
-  };
+  bay: string;
+  floor: string;
+  block: string;
+  elevation: string;
   deployedAt?: Date;
   lastInspection?: Date;
   nextInspection?: Date;
@@ -64,10 +62,9 @@ export interface DeliveryOrder {
   fileUrl?: string;
 }
 
-// Transaction containing multiple gondolas
-export interface Transaction {
+// Project containing multiple gondolas
+export interface Project {
   id: string;
-  doNumber: string;
   clientName: string;
   siteName: string;
   createdAt: Date;
@@ -75,8 +72,8 @@ export interface Transaction {
   endDate?: Date;
   status: 'active' | 'completed' | 'cancelled';
   gondolas: Gondola[];
-  // Optional array of delivery orders (for multiple DOs support)
   deliveryOrders?: DeliveryOrder[];
+  documents: Document[];
 }
 
 // For notification panel
@@ -98,7 +95,7 @@ export interface CertificateExpiry {
   documentType: DocumentType;
   expiryDate: Date;
   daysRemaining: number;
-  status: 'valid' | 'expiring' | 'expired';
+  status: 'valid' | 'expired';
 }
 
 export interface Profile {

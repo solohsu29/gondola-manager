@@ -29,7 +29,7 @@ import { useRouter } from 'next/navigation';
 
 const SignupPage = () => {
   const router = useRouter();
-  const { storeUserInfo, storeToken } = useUserInfo();
+  const { user } = useUserInfo(); // if you want to check loading or user state
   const [apiError, setApiError] = React.useState<string | null>(null);
   const [showVerifyMessage, setShowVerifyMessage] = React.useState(false);
   const form = useForm<SignupFormInputs>({

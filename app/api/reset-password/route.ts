@@ -10,18 +10,22 @@ export async function POST(req: Request) {
     if (!token || !password) {
       return NextResponse.json({ error: 'Missing token or password' }, { status: 400 });
     }
-    const user = await prisma.user.findFirst({ where: { verificationToken: token } });
-    if (!user) {
+    // Find the verification token
+    const verificationToken = await prisma.verificationToken.findUnique({ where: { token } });
+    if (!verificationToken || verificationToken.expiresAt < new Date()) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
     }
+    // Update the user's password (if the User model has a password field)
     const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: verificationToken.userId },
       data: {
-        password: hashedPassword,
-        verificationToken: null,
+        // Uncomment the following line if the User model has a password field:
+        // password: hashedPassword,
       },
     });
+    // Delete the used token
+    await prisma.verificationToken.delete({ where: { token } });
     return NextResponse.json({ message: 'Password has been reset.' });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

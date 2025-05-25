@@ -9,16 +9,18 @@ export async function GET(req: Request) {
   if (!token) {
     return NextResponse.json({ error: 'Missing token' }, { status: 400 });
   }
-  const user = await prisma.user.findFirst({ where: { verificationToken: token } });
-  if (!user) {
+  // Find the verification token
+  const verification = await prisma.verificationToken.findUnique({ where: { token } });
+  if (!verification || verification.expiresAt < new Date()) {
     return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
   }
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      emailVerified: new Date(),
-      verificationToken: null,
-    },
+  // Confirm the user
+  const updatedUser = await prisma.user.update({
+    where: { id: verification.userId },
+    data: { confirmed: true },
   });
-  return NextResponse.json({ success: true });
+  // Delete the token
+  await prisma.verificationToken.delete({ where: { token } });
+  console.log('User after verification:', updatedUser);
+  return NextResponse.json({ success: true, user: updatedUser });
 }

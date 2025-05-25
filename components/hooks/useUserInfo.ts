@@ -6,16 +6,8 @@ import { User } from "@/lib/generated/prisma";
 
 
 export const useUserInfo = () => {
-  const userInitial: User = {
-id:0,
-    email: "",
-    name: "",
-   
-   
-  };
-
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
@@ -23,38 +15,20 @@ id:0,
   const { getItem, setItem, removeItem } = useLocalStore();
 
   useEffect(() => {
-    const storedUser = getItem("user");
-    const storedToken = getItem("token");
+    fetch('/api/me')
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => setUser(data.user))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+    // Still use localStorage for non-auth flows (email/code/role)
     const storedEmail = getItem("email");
     const storedCode = getItem("code");
     const storedRole = getItem("role");
-
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    if (storedToken) {
-      setToken(storedToken);
-    }
-    if (storedEmail) {
-      setEmail(storedEmail);
-    }
-    if (storedCode) {
-      setCode(storedCode);
-    }
-    if (storedRole) {
-      setRole(storedRole);
-    }
+    if (storedEmail) setEmail(storedEmail);
+    if (storedCode) setCode(storedCode);
+    if (storedRole) setRole(storedRole);
   }, []);
 
-  const storeUserInfo = (data: any) => {
-    setItem("user", JSON.stringify(data));
-    setUser(data);
-  };
-
-  const storeToken = (token: string) => {
-    setItem("token", token);
-    setToken(token);
-  };
   const storeEmail = (email: string) => {
     setItem("email", email);
     setEmail(email);
@@ -67,6 +41,7 @@ id:0,
     setItem("role", role);
     setRole(role);
   };
+
   const removeForgotPassData = () => {
     removeItem("email");
     setEmail(null);
@@ -75,21 +50,18 @@ id:0,
   };
 
   const removeAllData = () => {
-    removeItem("user");
-    removeItem("token");
     removeItem("email");
+    removeItem("code");
     removeItem("role");
-    setUser(userInitial);
-    setToken(null);
     setEmail(null);
+    setCode(null);
     setRole(null);
+    setUser(null);
   };
 
   return {
     user,
-    storeUserInfo,
-    token,
-    storeToken,
+    loading,
     removeAllData,
     storeEmail,
     email,
