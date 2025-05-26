@@ -35,7 +35,8 @@ import { EditProjectDialog } from "@/components/projects/EditProjectDialog";
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize] = useState(10); // You can make this user-selectable if desired
 
   const { projects, fetchProjects } = useStore();
 
@@ -58,6 +59,9 @@ const Projects = () => {
     return matchesSearch && matchesStatus;
   });
 console.log('projects',filteredProjects)
+
+const pageCount = Math.max(1, Math.ceil(filteredProjects.length / pageSize));
+  const paginatedProjects = filteredProjects.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
   return (
        
           <div className="max-w-7xl mx-auto">
@@ -126,14 +130,14 @@ console.log('projects',filteredProjects)
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredProjects.length === 0 ? (
+                      {paginatedProjects.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={7} className="text-center py-10 text-gray-500">
                             No matching projects found
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredProjects.map((project) => (
+                        paginatedProjects.map((project) => (
                           <TableRow key={project.id}>
                             <TableCell className="font-medium">
                               <Link href={`/projects/${project.id}`} className="text-gondola-600 hover:text-gondola-800 underline">
@@ -224,27 +228,49 @@ console.log('projects',filteredProjects)
                   </Table>
                 </div>
                 
-                <div className="mt-6">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious href="#" />
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink href="#" isActive>1</PaginationLink>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink href="#">2</PaginationLink>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink href="#">3</PaginationLink>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationNext href="#" />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
+                <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
+                     <div className="w-full">
+                       {(() => {
+                         const total = filteredProjects.length;
+                         const start = total === 0 ? 0 : pageIndex * pageSize + 1;
+                         const end = Math.min((pageIndex + 1) * pageSize, total);
+                         return (
+                           <span>
+                             Showing {start}-{end} of {total} project{total !== 1 ? 's' : ''}
+                           </span>
+                         );
+                       })()}
+                     </div>
+                     <Pagination className="justify-end">
+                       <PaginationContent>
+                         <PaginationItem>
+                           <PaginationPrevious
+                             href="#"
+                             onClick={e => { e.preventDefault(); setPageIndex((i: number) => Math.max(0, i - 1)); }}
+                             aria-disabled={pageIndex === 0}
+                           />
+                         </PaginationItem>
+                         {Array.from({ length: pageCount }, (_, i) => (
+                           <PaginationItem key={i}>
+                             <PaginationLink
+                               href="#"
+                               isActive={i === pageIndex}
+                               onClick={e => { e.preventDefault(); setPageIndex((i as number)); }}
+                             >
+                               {i + 1}
+                             </PaginationLink>
+                           </PaginationItem>
+                         ))}
+                         <PaginationItem>
+                           <PaginationNext
+                             href="#"
+                             onClick={e => { e.preventDefault(); setPageIndex((i: number) => Math.min(pageCount - 1, i + 1)); }}
+                             aria-disabled={pageIndex === pageCount - 1}
+                           />
+                         </PaginationItem>
+                       </PaginationContent>
+                     </Pagination>
+                   </div>
               </CardContent>
             </Card>
           </div>

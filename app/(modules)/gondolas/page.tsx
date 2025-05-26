@@ -38,6 +38,8 @@ import Image from "next/image";
 const Gondolas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize] = useState(10); // You can make this user-selectable if desired
   const { gondolas, fetchGondolas } = useStore();
 
   useEffect(() => {
@@ -82,6 +84,17 @@ const getStatusBadgeVariant = (status: string) => {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination logic
+  const pageCount = Math.max(1, Math.ceil(filteredGondolas.length / pageSize));
+  const paginatedGondolas = filteredGondolas.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+
+  // Reset to page 0 if search/filter changes and current page is out of range
+  useEffect(() => {
+    if (pageIndex > 0 && pageIndex >= pageCount) {
+      setPageIndex(0);
+    }
+  }, [filteredGondolas.length, pageCount]);
 
   return (
        
@@ -160,7 +173,7 @@ const getStatusBadgeVariant = (status: string) => {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredGondolas?.map((gondola) => (
+                         paginatedGondolas?.map((gondola) => (
                           <TableRow key={gondola.id}>
                             <TableCell className="font-medium">
                             <Avatar className="h-10 w-10 rounded-md">
@@ -245,27 +258,49 @@ const getStatusBadgeVariant = (status: string) => {
                   </Table>
                 </div>
                 
-                <div className="mt-6">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious href="#" />
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink href="#" isActive>1</PaginationLink>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink href="#">2</PaginationLink>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink href="#">3</PaginationLink>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationNext href="#" />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
+                <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2">
+                     <div className="w-full">
+                       {(() => {
+                         const total = filteredGondolas.length;
+                         const start = total === 0 ? 0 : pageIndex * pageSize + 1;
+                         const end = Math.min((pageIndex + 1) * pageSize, total);
+                         return (
+                           <span>
+                             Showing {start}-{end} of {total} gondola{total !== 1 ? 's' : ''}
+                           </span>
+                         );
+                       })()}
+                     </div>
+                     <Pagination className="justify-end">
+                       <PaginationContent>
+                         <PaginationItem>
+                           <PaginationPrevious
+                             href="#"
+                             onClick={e => { e.preventDefault(); setPageIndex((i: number) => Math.max(0, i - 1)); }}
+                             aria-disabled={pageIndex === 0}
+                           />
+                         </PaginationItem>
+                         {Array.from({ length: pageCount }, (_, i) => (
+                           <PaginationItem key={i}>
+                             <PaginationLink
+                               href="#"
+                               isActive={i === pageIndex}
+                               onClick={e => { e.preventDefault(); setPageIndex((i as number)); }}
+                             >
+                               {i + 1}
+                             </PaginationLink>
+                           </PaginationItem>
+                         ))}
+                         <PaginationItem>
+                           <PaginationNext
+                             href="#"
+                             onClick={e => { e.preventDefault(); setPageIndex((i: number) => Math.min(pageCount - 1, i + 1)); }}
+                             aria-disabled={pageIndex === pageCount - 1}
+                           />
+                         </PaginationItem>
+                       </PaginationContent>
+                     </Pagination>
+                   </div>
               </CardContent>
             </Card>
           </div>

@@ -81,6 +81,8 @@ model Photo {
   uploadedAt  DateTime
   description String
   gondolaId   String
+  content     Bytes?
+  mimeType    String?
 
   gondola     Gondola  @relation(fields: [gondolaId], references: [id], onDelete: Cascade)
 }

@@ -91,7 +91,7 @@ export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocuments
     if (onDocumentsChange) onDocumentsChange(newDocs);
   };
 
-
+console.log('document',documents)
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -149,32 +149,7 @@ export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocuments
       )}
       {/* Uploaded documents list */}
       {documents.length > 0 ? (
-        <div className="space-y-2 mt-4">
-          {documents.map((doc, idx) => (
-            <div key={doc.id} className="flex items-center gap-2 border rounded-md px-2 py-1 bg-white">
-              <FileText className="h-4 w-4 text-blue-500" />
-              <a
-                href={doc.fileUrl || undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={doc.fileUrl ? "text-blue-700 underline" : "text-gray-500"}
-                download={doc.name}
-              >
-                {doc.name}
-              </a>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="ml-auto"
-                onClick={() => handleRemoveDocument(idx)}
-                disabled={isUploading}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
-        </div>
+        <DocumentsTable documents={documents} onDelete={handleRemoveDocument} isUploading={isUploading} />
       ) : (
         <div className="text-gray-500 text-sm mt-4">No documents uploaded</div>
       )}
@@ -182,3 +157,4 @@ export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocuments
   );
 }
 
+import DocumentsTable from "@/components/common/DocumentsTable";

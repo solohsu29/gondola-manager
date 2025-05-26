@@ -30,6 +30,8 @@ export function EditGondolaDialog({
   const [open, setOpen] = useState(false)
   // Ref for staged doc upload
   const stagedDocsRef = useRef<{ uploadAllStagedFiles: () => Promise<void> } | null>(null);
+  // Ref for staged image upload
+  const stagedImagesRef = useRef<{ uploadAllStagedImages: () => Promise<void> } | null>(null);
 
   const [gondolaData, setGondolaData] = useState<{
     id:string;
@@ -74,6 +76,10 @@ export function EditGondolaDialog({
     // Upload staged documents after saving gondola
     if (stagedDocsRef.current) {
       await stagedDocsRef.current.uploadAllStagedFiles();
+    }
+    // Upload staged images after saving gondola and documents
+    if (stagedImagesRef.current) {
+      await stagedImagesRef.current.uploadAllStagedImages();
     }
     setOpen(false)
     onSave()
@@ -261,11 +267,12 @@ export function EditGondolaDialog({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-              <GondolaImageUpload
-                    gondolaId={gondolaData.id}
-                    currentImages={gondolaData.photos}
-                    onImagesChange={(images: GondolaPhoto[]) => setGondolaData((prev) => ({ ...prev, photos: images }))}
-                  />
+                <GondolaImageUpload
+                  gondolaId={gondolaData.id}
+                  currentImages={gondolaData.photos}
+                  onImagesChange={(images: GondolaPhoto[]) => setGondolaData((prev) => ({ ...prev, photos: images }))}
+                  onStagedImagesRef={ref => { stagedImagesRef.current = ref; }}
+                />
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <Image className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-500">Image upload component will be displayed here</p>

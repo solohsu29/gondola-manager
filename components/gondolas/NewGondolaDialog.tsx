@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -59,45 +58,57 @@ function getStatusColor(status: GondolaStatus) {
   }
 }
 
+const stagedImagesRef = useRef<{ uploadAllStagedImages: (gondolaId?: string) => Promise<void> } | null>(null);
+const stagedDocsRef = useRef<{ uploadAllStagedFiles: (gondolaId?: string) => Promise<void> } | null>(null);
+
 const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const newGondola = {
-      serialNumber: gondolaData.serialNumber || `SN-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}-${new Date().getFullYear()}`,
-      status: gondolaData.status,
-      bay: gondolaData.bay,
-      floor: gondolaData.floor,
-      block: gondolaData.block,
-      elevation: gondolaData.elevation,
-      lastInspection: gondolaData.lastInspection ? new Date(gondolaData.lastInspection) : undefined,
-      nextInspection: gondolaData.nextInspection ? new Date(gondolaData.nextInspection) : undefined,
-      // photos and documents are handled separately after gondola creation
-    };
-    const res = await fetch('/api/gondolas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newGondola),
-    });
-    if (res.ok) {
-      // Optionally, refetch gondolas or update UI here
-      setOpen(false);
-      setGondolaData({
-        id: "",
-        serialNumber: "",
-        status: "available" as GondolaStatus,
-        bay: "",
-        floor: "",
-        block: "",
-        elevation: "",
-        lastInspection: new Date().toISOString().split("T")[0],
-        nextInspection: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        photos: [],
-        documents: [],
-      });
-      fetchGondolas()
-    } else {
-      alert('Failed to add gondola');
+  e.preventDefault();
+  const newGondola = {
+    serialNumber: gondolaData.serialNumber || `SN-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}-${new Date().getFullYear()}`,
+    status: gondolaData.status,
+    bay: gondolaData.bay,
+    floor: gondolaData.floor,
+    block: gondolaData.block,
+    elevation: gondolaData.elevation,
+    lastInspection: gondolaData.lastInspection ? new Date(gondolaData.lastInspection) : undefined,
+    nextInspection: gondolaData.nextInspection ? new Date(gondolaData.nextInspection) : undefined,
+    // photos and documents are handled separately after gondola creation
+  };
+  const res = await fetch('/api/gondolas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newGondola),
+  });
+  if (res.ok) {
+    const created = await res.json();
+    const gondolaId = created.id;
+    // Upload staged images and documents with the new gondolaId
+    if (stagedImagesRef.current) {
+      await stagedImagesRef.current.uploadAllStagedImages(gondolaId);
     }
+    if (stagedDocsRef.current) {
+      await stagedDocsRef.current.uploadAllStagedFiles(gondolaId);
+    }
+    setOpen(false);
+    setGondolaData({
+      id: "",
+      serialNumber: "",
+      status: "available" as GondolaStatus,
+      bay: "",
+      floor: "",
+      block: "",
+      elevation: "",
+      lastInspection: new Date().toISOString().split("T")[0],
+      nextInspection: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      photos: [],
+      documents: [],
+    });
+    fetchGondolas();
+  } else {
+    alert('Failed to add gondola');
   }
+}
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -270,10 +281,11 @@ const handleSubmit = async (e: React.FormEvent) => {
               </CardHeader>
               <CardContent>
               <GondolaImageUpload
-                    gondolaId={gondolaData.id}
-                    currentImages={gondolaData.photos}
-                    onImagesChange={(images: GondolaPhoto[]) => setGondolaData((prev) => ({ ...prev, photos: images }))}
-                  />
+  gondolaId={gondolaData.id}
+  currentImages={gondolaData.photos}
+  onImagesChange={(images: GondolaPhoto[]) => setGondolaData((prev) => ({ ...prev, photos: images }))}
+  onStagedImagesRef={ref => { stagedImagesRef.current = ref; }}
+/>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <Image className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-500">Image upload component will be displayed here</p>
@@ -297,10 +309,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                 Manage certificates, inspection reports, and other important documents for this gondola.
               </p>
               <GondolaDocumentUpload
-                gondolaId={gondolaData.id}
-                currentDocuments={gondolaData.documents}
-                onDocumentsChange={(docs: Document[]) => setGondolaData((prev) => ({ ...prev, documents: docs }))}
-              />
+  gondolaId={gondolaData.id}
+  currentDocuments={gondolaData.documents}
+  onDocumentsChange={(docs: Document[]) => setGondolaData((prev) => ({ ...prev, documents: docs }))}
+  onStagedDocsRef={ref => { stagedDocsRef.current = ref; }}
+/>
             </CardContent>
           </Card>
 

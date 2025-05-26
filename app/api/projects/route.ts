@@ -3,15 +3,71 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   const projects = await prisma.project.findMany({
-    include: {
+    select: {
+      id: true,
+      clientName: true,
+      siteName: true,
+      createdAt: true,
+      startDate: true,
+      endDate: true,
+      status: true,
       gondolas: {
-        include: {
-          documents: true,
-          photos: true,
-        },
+        select: {
+          id: true,
+          serialNumber: true,
+          status: true,
+          bay: true,
+          floor: true,
+          block: true,
+          elevation: true,
+          deployedAt: true,
+          lastInspection: true,
+          nextInspection: true,
+          documents: {
+            select: {
+              id: true,
+              type: true,
+              name: true,
+              uploadedAt: true,
+              expiryDate: true,
+              fileUrl: true,
+              status: true,
+              // content is intentionally excluded
+            }
+          },
+          photos: {
+            select: {
+              id: true,
+              url: true,
+              uploadedAt: true,
+              description: true,
+              gondolaId: true,
+              // content, mimeType are excluded
+            }
+          }
+        }
       },
-      deliveryOrders: true,
-      documents: true,
+      deliveryOrders: {
+        select: {
+          id: true,
+          number: true,
+          date: true,
+          fileUrl: true,
+          projectId: true,
+        }
+      },
+      documents: {
+        select: {
+          id: true,
+          type: true,
+          name: true,
+          uploadedAt: true,
+          expiryDate: true,
+          fileUrl: true,
+          status: true,
+          // content is intentionally excluded
+        }
+      }
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -31,12 +87,20 @@ export async function POST(req: NextRequest) {
       documents: {
         create: documents
           .filter((doc: any) => !doc.id || doc.id.startsWith('preview-') || doc.id.length < 24) // Only create new docs
-          .map((doc: any) => ({
-            ...doc,
-            id: undefined,
-            projectId: undefined,
-            gondolaId: doc.gondolaId || undefined,
-          })),
+          .map((doc: any) => {
+            // Attach to gondola if gondolaId is present, otherwise to project
+            const base = {
+              ...doc,
+              id: undefined,
+              projectId: undefined,
+              gondolaId: undefined,
+            };
+            if (doc.gondolaId) {
+              return { ...base, gondolaId: doc.gondolaId };
+            } else {
+              return { ...base, projectId: undefined };
+            }
+          }),
       },
       gondolas: {
         connect: gondolas.map((g: any) => ({ id: g.id })),

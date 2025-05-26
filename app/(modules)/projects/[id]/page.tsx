@@ -57,9 +57,10 @@ const ProjectDetail = () => {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('projectId', project.id);
       if (uploadingGondolaId) {
         formData.append('gondolaId', uploadingGondolaId);
+      } else {
+        formData.append('projectId', project.id);
       }
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
