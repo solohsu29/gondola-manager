@@ -219,7 +219,9 @@ const getStatusBadgeVariant = (status: string) => {
                             <div className="flex gap-2">
                     <EditGondolaDialog
                       gondola={gondola}
-                      onSave={() => setSearchTerm(searchTerm)} // Trigger re-render
+                      onSave={() => {
+                        setSearchTerm(searchTerm); 
+                        fetchGondolas()}} // Trigger re-render
                     />
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
