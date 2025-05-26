@@ -1,10 +1,7 @@
 
 "use client"
 import { useState } from "react";
-
-import { ChevronDown, Download, FileCheck, FileText, Filter, Plus, Search, Trash } from "lucide-react";
-
-
+import { Download, FileCheck, Filter, Search, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,14 +14,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { formatDistanceToNow } from "date-fns";
-
 import {
   Pagination,
   PaginationContent,
@@ -42,8 +31,6 @@ import { useStore } from "@/lib/store/useStore";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
 import { EditProjectDialog } from "@/components/projects/EditProjectDialog";
-
-type ProjectStatus = 'all' | 'active' | 'completed' | 'cancelled';
 
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");

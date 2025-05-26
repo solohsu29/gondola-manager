@@ -8,83 +8,67 @@ interface GondolaDocumentUploadProps {
   gondolaId: string;
   currentDocuments?: Document[];
   onDocumentsChange?: (docs: Document[]) => void;
+  onStagedDocsRef?: (ref: { uploadAllStagedFiles: () => Promise<void> }) => void;
 }
 
-export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocumentsChange }: GondolaDocumentUploadProps) {
+export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocumentsChange, onStagedDocsRef }: GondolaDocumentUploadProps) {
   const [documents, setDocuments] = useState<Document[]>(currentDocuments || []);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFile = async (file: File): Promise<Document | null> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('gondolaId', gondolaId);
-    try {
-      const res = await fetch('/api/documents/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        return {
-          id: data.id,
-          type: data.type || 'ADHOC',
-          name: data.name,
-          uploadedAt: new Date(data.uploadedAt),
-          expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined,
-          fileUrl: data.url,
-          status: data.status || 'valid',
-        };
-      }
-      return null;
-    } catch (err) {
-      console.error('Upload failed:', err);
-      return null;
+  // Expose uploadAllStagedFiles to parent
+  React.useEffect(() => {
+    if (onStagedDocsRef) {
+      onStagedDocsRef({ uploadAllStagedFiles });
     }
-  };
+    // eslint-disable-next-line
+  }, [stagedFiles, documents]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  // Batch upload all staged files
+  async function uploadAllStagedFiles() {
+    if (!gondolaId || stagedFiles.length === 0) return;
     setIsUploading(true);
     setUploadError("");
-    let newDocs = [...documents];
-    for (const file of Array.from(files)) {
-      // Show filename immediately
-      const tempId = `preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const previewDoc: Document = {
-        id: tempId,
-        type: 'ADHOC',
-        name: file.name,
-        uploadedAt: new Date(),
-        fileUrl: '',
-        status: 'valid',
-      };
-      newDocs = [...newDocs, previewDoc];
-      setDocuments([...newDocs]);
-      if (onDocumentsChange) onDocumentsChange([...newDocs]);
-      // Upload in background
+    const uploadedDocs: Document[] = [];
+    for (const file of stagedFiles) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('gondolaId', gondolaId);
       try {
-        const uploaded = await uploadFile(file);
-        if (uploaded) {
-          newDocs = newDocs.map((doc) => doc.id === tempId ? uploaded : doc);
-          setDocuments([...newDocs]);
-          if (onDocumentsChange) onDocumentsChange([...newDocs]);
-        } else {
-          newDocs = newDocs.filter((doc) => doc.id !== tempId);
-          setDocuments([...newDocs]);
-          setUploadError("Upload failed: Invalid gondola or server error.");
-          if (onDocumentsChange) onDocumentsChange([...newDocs]);
+        const res = await fetch('/api/documents/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          uploadedDocs.push({
+            id: data.id,
+            type: data.type || 'ADHOC',
+            name: data.name,
+            uploadedAt: new Date(data.uploadedAt),
+            expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined,
+            fileUrl: data.url,
+            status: data.status || 'valid',
+          } as Document);
         }
       } catch (err) {
-        newDocs = newDocs.filter((doc) => doc.id !== tempId);
-        setDocuments([...newDocs]);
-        setUploadError("Upload failed: " + (err instanceof Error ? err.message : "Unknown error"));
-        if (onDocumentsChange) onDocumentsChange([...newDocs]);
+        setUploadError('One or more files failed to upload.');
       }
     }
+    setStagedFiles([]);
+    const newDocs = [...documents, ...uploadedDocs];
+    setDocuments(newDocs);
+    if (onDocumentsChange) onDocumentsChange(newDocs);
     setIsUploading(false);
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setStagedFiles(prev => [...prev, ...Array.from(files)]);
+    e.target.value = '';
   };
 
   const handleRemoveDocument = async (index: number) => {
@@ -120,7 +104,17 @@ export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocuments
           title={!gondolaId ? "Save gondola first" : undefined}
         >
           <Upload className="h-4 w-4 mr-2" />
-          {isUploading ? "Uploading..." : "Upload Documents"}
+          Select Documents
+        </Button>
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          className="ml-2"
+          onClick={uploadAllStagedFiles}
+          disabled={isUploading || stagedFiles.length === 0 || !gondolaId}
+        >
+          {isUploading ? "Uploading..." : `Upload All (${stagedFiles.length})`}
         </Button>
       </div>
       {uploadError && (
@@ -132,8 +126,30 @@ export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocuments
         </div>
       )}
       <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" multiple disabled={!gondolaId} />
+      {/* Staged files preview */}
+      {stagedFiles.length > 0 && (
+        <div className="space-y-2 mt-2">
+          {stagedFiles.map((file, idx) => (
+            <div key={file.name + idx} className="flex items-center gap-2 border rounded-md px-2 py-1 bg-blue-50">
+              <FileText className="h-4 w-4 text-blue-400" />
+              <span className="text-blue-900">{file.name}</span>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="ml-auto"
+                onClick={() => setStagedFiles(stagedFiles.filter((_, i) => i !== idx))}
+                disabled={isUploading}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Uploaded documents list */}
       {documents.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-2 mt-4">
           {documents.map((doc, idx) => (
             <div key={doc.id} className="flex items-center gap-2 border rounded-md px-2 py-1 bg-white">
               <FileText className="h-4 w-4 text-blue-500" />
@@ -152,6 +168,7 @@ export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocuments
                 size="sm"
                 className="ml-auto"
                 onClick={() => handleRemoveDocument(idx)}
+                disabled={isUploading}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -159,8 +176,9 @@ export function GondolaDocumentUpload({ gondolaId, currentDocuments, onDocuments
           ))}
         </div>
       ) : (
-        <div className="text-gray-500 text-sm">No documents uploaded</div>
+        <div className="text-gray-500 text-sm mt-4">No documents uploaded</div>
       )}
     </div>
   );
 }
+

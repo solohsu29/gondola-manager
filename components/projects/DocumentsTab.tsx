@@ -11,8 +11,8 @@ import { Document } from "../data-types";
 
 interface DocumentsTabProps {
   allDocuments: {
-    gondolaId: string;
-    serialNumber: string;
+    gondolaId: string | null;
+    serialNumber: string | null;
     documents: Document[];
   }[];
 }
@@ -52,10 +52,10 @@ const DocumentsTab = ({ allDocuments }: DocumentsTabProps) => {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" asChild>
-                        <a href={document.fileUrl} target="_blank" rel="noreferrer">
-                          <FileText className="h-4 w-4 mr-1" />
-                          View
-                        </a>
+                        <a href={document.fileUrl} target="_blank" rel="noreferrer" download={document.name}>
+  <FileText className="h-4 w-4 mr-1" />
+  Download
+</a>
                       </Button>
                     </TableCell>
                   </TableRow>

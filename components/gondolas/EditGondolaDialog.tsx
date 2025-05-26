@@ -2,7 +2,7 @@
 
 "use client"
 import type React from "react"
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -28,7 +28,8 @@ export function EditGondolaDialog({
   onSave: () => void
 }) {
   const [open, setOpen] = useState(false)
- 
+  // Ref for staged doc upload
+  const stagedDocsRef = useRef<{ uploadAllStagedFiles: () => Promise<void> } | null>(null);
 
   const [gondolaData, setGondolaData] = useState<{
     id:string;
@@ -56,7 +57,7 @@ export function EditGondolaDialog({
     documents: gondola?.documents || [],
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const updatedGondola = {
       serialNumber: gondolaData.serialNumber,
@@ -70,6 +71,10 @@ export function EditGondolaDialog({
       photos: gondolaData.photos || [],
     }
     useStore.getState().updateGondola(gondola.id, updatedGondola)
+    // Upload staged documents after saving gondola
+    if (stagedDocsRef.current) {
+      await stagedDocsRef.current.uploadAllStagedFiles();
+    }
     setOpen(false)
     onSave()
   }
@@ -287,6 +292,7 @@ export function EditGondolaDialog({
                 gondolaId={gondolaData.id}
                 currentDocuments={gondolaData.documents}
                 onDocumentsChange={(docs: Document[]) => setGondolaData((prev) => ({ ...prev, documents: docs }))}
+                onStagedDocsRef={ref => { stagedDocsRef.current = ref; }}
               />
             </CardContent>
           </Card>

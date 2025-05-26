@@ -51,6 +51,7 @@ model Document {
   status      String
   gondolaId   String?
   projectId   String?
+  content     Bytes
 
   gondola     Gondola? @relation(fields: [gondolaId], references: [id])
   project     Project? @relation(fields: [projectId], references: [id])

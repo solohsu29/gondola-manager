@@ -160,7 +160,7 @@ const ProjectDetail = () => {
   // const projectDOs = Array.isArray(project.deliveryOrders) 
   //   ? project.deliveryOrders 
   //   : [{ id: 'default-do', number: project.doNumber, date: project.createdAt }];
-
+console.log('projects',projects)
   return (
     <>
       {uploadModal}
@@ -189,12 +189,25 @@ const ProjectDetail = () => {
           />
         </TabsContent>
         <TabsContent value="documents">
-          <DocumentsTab allDocuments={Array.isArray(project.gondolas) ? project.gondolas.map(gondola => ({
-            gondolaId: gondola.id,
-            serialNumber: gondola.serialNumber,
-            documents: gondola.documents || []
-          })) : []} />
-        </TabsContent>
+  <DocumentsTab allDocuments={[
+    ...(project.gondolas || []).map(gondola => ({
+      gondolaId: gondola.id,
+      serialNumber: gondola.serialNumber,
+      documents: (gondola.documents || []).map(doc => ({
+        ...doc,
+        fileUrl: doc.fileUrl && doc.fileUrl.trim() !== "" ? doc.fileUrl : `/api/documents/${doc.id}/download`
+      }))
+    })),
+    {
+      gondolaId: null,
+      serialNumber: null,
+      documents: (project.documents || []).map(doc => ({
+        ...doc,
+        fileUrl: doc.fileUrl && doc.fileUrl.trim() !== "" ? doc.fileUrl : `/api/documents/${doc.id}/download`
+      }))
+    }
+  ]} />
+</TabsContent>
       </Tabs>
     </div>
     </>

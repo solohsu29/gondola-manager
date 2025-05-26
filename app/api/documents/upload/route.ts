@@ -8,21 +8,13 @@ import Busboy from 'busboy';
 import type { Readable } from 'stream';
 import { prisma } from '@/lib/prisma';
 
-// Set uploads directory
-const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-
-async function ensureUploadsDir() {
-  try {
-    await fs.mkdir(uploadsDir, { recursive: true });
-  } catch (e) {}
-}
+// Removed uploads directory logic. Files are now stored directly in the database.
 
 export async function POST(req: NextRequest) {
   try {
     if (req.method !== 'POST') {
       return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
     }
-    await ensureUploadsDir();
     const formData = await req.formData();
     const file = formData.get('file');
     const projectId = formData.get('projectId');
@@ -36,16 +28,15 @@ export async function POST(req: NextRequest) {
     const originalName = (file as File).name;
     const ext = path.extname(originalName);
     const fileName = uuidv4() + ext;
-    const savePath = path.join(uploadsDir, fileName);
-    const fileUrl = `/uploads/${fileName}`;
+    const fileUrl = '';
 
+    let buffer: Buffer;
     try {
       const arrayBuffer = await (file as File).arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      await fs.writeFile(savePath, buffer);
-    } catch (fileWriteError: any) {
-      console.error('File write error:', fileWriteError);
-      return NextResponse.json({ error: 'File write error', details: fileWriteError.message }, { status: 500 });
+      buffer = Buffer.from(arrayBuffer);
+    } catch (fileReadError: any) {
+      console.error('File read error:', fileReadError);
+      return NextResponse.json({ error: 'File read error', details: fileReadError.message }, { status: 500 });
     }
 
     try {
@@ -59,7 +50,8 @@ export async function POST(req: NextRequest) {
           fileUrl,
           status: 'valid',
           gondolaId: typeof gondolaId === 'string' && gondolaId.length > 0 ? gondolaId : null,
-          projectId: typeof projectId === 'string' ? projectId : null,
+          projectId: typeof projectId === 'string' && projectId.length > 0 ? projectId : null,
+          content: buffer,
         },
       });
       return NextResponse.json({
